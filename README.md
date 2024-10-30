@@ -53,8 +53,8 @@ Connect the components as follows:
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/yourusername/esp32-ultrasonic-oled.git
-    cd esp32-ultrasonic-oled
+    git clone https://github.com/Lelin07/ESP32.git
+    cd ESP32
     ```
 
 2. Open the project in Visual Studio Code with PlatformIO extension installed.
