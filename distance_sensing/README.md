@@ -32,6 +32,8 @@ This project uses an ESP32 microcontroller to interface with an ultrasonic senso
 
 ## Circuit Diagram
 
+![Circuit Diagram](assets/diagram.jpg)
+
 Connect the components as follows:
 
 - **Ultrasonic Sensor:**
