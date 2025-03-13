@@ -62,7 +62,7 @@ int frame = 0;
 // LED pin definition
 const int LED_PIN = 2; // Change if your built-in LED is on a different pin
 
-const int BUZZER_PIN = 4; // Change if your buzzer is on a different pin
+const int BUZZER_PIN = 25; // Change if your buzzer is on a different pin
 
 // LED control timing
 unsigned long previousMillis = 0;
@@ -70,8 +70,8 @@ const long ledInterval = 250; // LED flash interval (in milliseconds)
 bool ledState = LOW;          // Current state of the LED
 
 unsigned long buzzerMillis = 0;
-long buzzerInterval = 1000; // Buzzer beep interval (in milliseconds)
-bool buzzerState = LOW;           // Current state of the buzzer
+long buzzerInterval = 200; // Buzzer beep interval (in milliseconds)
+bool buzzerState = LOW;    // Current state of the buzzer
 
 void setup()
 {
@@ -102,7 +102,6 @@ void loop()
             ledState = !ledState;            // Toggle the LED state
             digitalWrite(LED_PIN, ledState); // Update the LED state
         }
-
 
         // Display the animation frame
         display.drawBitmap(32, 0, frames[frame], FRAME_WIDTH, FRAME_HEIGHT, 1);
@@ -143,15 +142,15 @@ void loop()
     {
         if (distance <= DISTANCE_THRESHOLD_BEEP1)
         {
-            buzzerInterval = 100; // Fast beeps (high frequency)
+            buzzerInterval = 50; // Fast beeps (high frequency)
         }
         else if (distance <= DISTANCE_THRESHOLD_BEEP2)
         {
-            buzzerInterval = 300; // Medium beeps
+            buzzerInterval = 100; // Medium beeps
         }
         else if (distance <= DISTANCE_THRESHOLD_BEEP3)
         {
-            buzzerInterval = 700; // Slow beeps (long gap)
+            buzzerInterval = 200; // Slow beeps (long gap)
         }
 
         // Toggle buzzer state based on interval
