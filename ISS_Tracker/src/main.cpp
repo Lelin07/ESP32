@@ -13,6 +13,8 @@
 #define OLED_RST_PIN -1
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST_PIN);
 
+#define BUTTON_PIN 15
+
 #define FRAME_DELAY (30)
 #define FRAME_WIDTH (64)
 #define FRAME_HEIGHT (64)
@@ -84,6 +86,8 @@ int frame2 = 0;
 
 const int BUZZER_PIN = 25; // Change if your buzzer is on a different pin
 
+int currentPage = 0; // Current page
+
 // LED control timing
 unsigned long previousMillis = 0;
 const long ledInterval = 250; // LED flash interval (in milliseconds)
@@ -102,12 +106,17 @@ const char *password = "sam1223334444";
 
 void getISSCoordinates(); // Forward declaration
 // void displayAnimation();                            // Forward declaration
-void playLoadingAnimation();                        // Forward declaration
-void playWifiAnimation();                           // Forward declaration
-void getPlaceName(float latitude, float longitude); // Forward declaration
+void playLoadingAnimation();                                             // Forward declaration
+void playWifiAnimation();                                                // Forward declaration
+void getPlaceName(float latitude, float longitude);                      // Forward declaration
+void getISSVelocityAndAltitude();                                        // Forward declaration
+void displayAstronauts();                                                // Forward declaration
+void displayPage(int page);                                              // Forward declaration
+float calculateDistance(float lat1, float lon1, float lat2, float lon2); // Forward declaration
 
 void setup()
 {
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
     // initialize serial communication
     Serial.begin(115200);
 
@@ -126,6 +135,7 @@ void setup()
     // initialize LED and buzzer pins
     pinMode(LED_PIN, OUTPUT);
     pinMode(BUZZER_PIN, OUTPUT);
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
 
     // connect to WiFi
     WiFi.begin(ssid, password);
@@ -171,13 +181,33 @@ void setup()
 
 void loop()
 {
-    // update ISS coordinates every 10 seconds
-    static unsigned long lastUpdate = 0;
-    if (millis() - lastUpdate > 10000)
-    {
-        lastUpdate = millis();
-        getISSCoordinates();
+    if (digitalRead(BUTTON_PIN) == LOW)
+    {   
+        // Make the buzzer beep for 40 ms to let the user know that the button is pressed
+        digitalWrite(BUZZER_PIN, HIGH);
+        delay(40);
+        digitalWrite(BUZZER_PIN, LOW);
+        delay(200); // debounce delay
+        currentPage = (currentPage + 1) % 3;
+        displayPage(currentPage);
     }
+
+    // Reserve a small bottom portion of the screen to show the page in circular format
+    display.fillRect(0, SCREEN_HEIGHT - 10, SCREEN_WIDTH, 10, SSD1306_BLACK); // Clear the bottom portion
+    for (int i = 0; i < 3; i++)
+    {
+        int x = (SCREEN_WIDTH / 2) - 20 + (i * 20); // Adjust the x position for each circle
+        int y = SCREEN_HEIGHT - 5;                  // Adjust the y position for the circles
+        if (i == currentPage)
+        {
+            display.fillCircle(x, y, 3, SSD1306_WHITE); // Filled circle for the current page
+        }
+        else
+        {
+            display.drawCircle(x, y, 3, SSD1306_WHITE); // Hollow circle for other pages
+        }
+    }
+    display.display();
 
     // Call playLoadingAnimation when WiFi is not connected
     if (WiFi.status() != WL_CONNECTED)
@@ -186,12 +216,31 @@ void loop()
     }
     else
     {
-        if (millis() - lastUpdate > 10000)
-        {   display.clearDisplay();
-            lastUpdate = millis();
-            getISSCoordinates();
+        if (digitalRead(BUTTON_PIN) == LOW)
+        {
+            delay(200); // debounce delay
+            currentPage = (currentPage + 1) % 3;
+            displayPage(currentPage);
         }
     }
+}
+
+void displayPage(int page)
+{
+    display.clearDisplay();
+    switch (page)
+    {
+    case 0:
+        getISSCoordinates();
+        break;
+    case 1:
+        getISSVelocityAndAltitude();
+        break;
+    case 2:
+        displayAstronauts();
+        break;
+    }
+    display.display();
 }
 
 void playWifiAnimation()
@@ -236,60 +285,67 @@ float calculateDistance(float lat1, float lon1, float lat2, float lon2)
 
 void getISSCoordinates()
 {
-    if (WiFi.status() == WL_CONNECTED)
+
+    // update ISS coordinates every 10 seconds
+    static unsigned long lastUpdate = 0;
+    if (millis() - lastUpdate > 10000)
     {
-        HTTPClient http;
-        http.begin("http://api.open-notify.org/iss-now.json");
-        int httpCode = http.GET();
-
-        if (httpCode > 0)
+        lastUpdate = millis();
+        if (WiFi.status() == WL_CONNECTED)
         {
-            String payload = http.getString();
-            Serial.println(payload);
+            HTTPClient http;
+            http.begin("http://api.open-notify.org/iss-now.json");
+            int httpCode = http.GET();
 
-            DynamicJsonDocument doc(1024);
-            deserializeJson(doc, payload);
-
-            float latitude = doc["iss_position"]["latitude"];
-            float longitude = doc["iss_position"]["longitude"];
-
-            display.clearDisplay();
-            display.setTextSize(1); // Adjust text size to prevent overflow
-            display.setCursor(0, 0);
-            display.print("ISS Coordinates:");
-            display.setCursor(0, 15); // Adjust cursor position
-            display.print("Lat: ");
-            display.print(latitude, 6);
-            display.setCursor(0, 30); // Adjust cursor position
-            display.print("Lon: ");
-            display.print(longitude, 6);
-            display.display();
-
-            // Blink LED to indicate update
-            for (int i = 0; i < 2; i++)
+            if (httpCode > 0)
             {
+                String payload = http.getString();
+                Serial.println(payload);
 
-                digitalWrite(LED_PIN, HIGH);
-                delay(50);
-                digitalWrite(LED_PIN, LOW);
-                delay(50);
+                DynamicJsonDocument doc(1024);
+                deserializeJson(doc, payload);
+
+                float latitude = doc["iss_position"]["latitude"];
+                float longitude = doc["iss_position"]["longitude"];
+
+                display.clearDisplay();
+                display.setTextSize(1); // Adjust text size to prevent overflow
+                display.setCursor(0, 0);
+                display.print("ISS Coordinates:");
+                display.setCursor(0, 15); // Adjust cursor position
+                display.print("Lat: ");
+                display.print(latitude, 6);
+                display.setCursor(0, 30); // Adjust cursor position
+                display.print("Lon: ");
+                display.print(longitude, 6);
+                display.display();
+
+                // Blink LED to indicate update
+                for (int i = 0; i < 2; i++)
+                {
+
+                    digitalWrite(LED_PIN, HIGH);
+                    delay(50);
+                    digitalWrite(LED_PIN, LOW);
+                    delay(50);
+                }
+
+                // Get the name of the place where the ISS is overhead
+                getPlaceName(latitude, longitude);
+
+                // Calculate distance to ISS
+                float distance = calculateDistance(myLatitude, myLongitude, latitude, longitude);
+                if (distance <= visibilityRangeKm)
+                {
+                    // Sound the buzzer if ISS is visible
+                    digitalWrite(BUZZER_PIN, HIGH);
+                    delay(1000);
+                    digitalWrite(BUZZER_PIN, LOW);
+                }
             }
 
-            // Calculate distance to ISS
-            float distance = calculateDistance(myLatitude, myLongitude, latitude, longitude);
-            if (distance <= visibilityRangeKm)
-            {
-                // Sound the buzzer if ISS is visible
-                digitalWrite(BUZZER_PIN, HIGH);
-                delay(1000);
-                digitalWrite(BUZZER_PIN, LOW);
-            }
-
-            // Get the name of the place where the ISS is overhead
-            getPlaceName(latitude, longitude);
+            http.end();
         }
-
-        http.end();
     }
 }
 
@@ -298,7 +354,7 @@ void getPlaceName(float latitude, float longitude)
     if (WiFi.status() == WL_CONNECTED)
     {
         HTTPClient http;
-        String url = "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + String(latitude, 6) + "&lon=" + String(longitude, 6) + "&zoom=10&addressdetails=1&accept-language=en";
+        String url = "https://api.wheretheiss.at/v1/coordinates/" + String(latitude, 6) + "," + String(longitude, 6);
         http.begin(url);
         int httpCode = http.GET();
 
@@ -310,11 +366,119 @@ void getPlaceName(float latitude, float longitude)
             DynamicJsonDocument doc(1024);
             deserializeJson(doc, payload);
 
-            const char *placeName = doc["display_name"].as<const char *>();
+            const char *placeName = doc["timezone_id"].as<const char *>();
 
             display.setCursor(0, 45); // Adjust cursor position
             display.print(placeName);
             display.display();
+        }
+
+        http.end();
+    }
+}
+
+void getISSVelocityAndAltitude()
+{
+
+    // update ISS coordinates every 2 seconds
+    static unsigned long lastUpdate = 0;
+    if (millis() - lastUpdate > 2000)
+    {
+        lastUpdate = millis();
+
+        if (WiFi.status() == WL_CONNECTED)
+        {
+            HTTPClient http;
+            http.begin("https://api.wheretheiss.at/v1/satellites/25544");
+            int httpCode = http.GET();
+
+            if (httpCode > 0)
+            {
+                String payload = http.getString();
+                Serial.println(payload);
+
+                DynamicJsonDocument doc(1024);
+                deserializeJson(doc, payload);
+
+                float velocity = doc["velocity"].as<float>();
+                float altitude = doc["altitude"].as<float>();
+
+                display.clearDisplay();
+                display.setTextSize(1); // Adjust text size to prevent overflow
+                display.setCursor(0, 0);
+                display.print("ISS Velocity:");
+                display.setCursor(0, 15); // Adjust cursor position
+                display.print(velocity, 2);
+                display.print(" km/h");
+                display.setCursor(0, 30); // Adjust cursor position
+                display.print("ISS Altitude:");
+                display.setCursor(0, 45); // Adjust cursor position
+                display.print(altitude, 2);
+                display.print(" km");
+                display.display();
+            }
+
+            // Blink LED to indicate update
+            for (int i = 0; i < 2; i++)
+            {
+
+                digitalWrite(LED_PIN, HIGH);
+                delay(50);
+                digitalWrite(LED_PIN, LOW);
+                delay(50);
+            }
+
+            http.end();
+        }
+    }
+}
+
+void displayAstronauts()
+{
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        HTTPClient http;
+        http.begin("http://api.open-notify.org/astros.json");
+        int httpCode = http.GET();
+
+        if (httpCode > 0)
+        {
+            String payload = http.getString();
+            Serial.println(payload);
+
+            DynamicJsonDocument doc(1024);
+            deserializeJson(doc, payload);
+
+            int astronautCount = doc["number"];
+            JsonArray astronauts = doc["people"];
+
+            display.clearDisplay();
+            display.setTextSize(1); // Adjust text size to prevent overflow
+            display.setCursor(0, 0);
+            display.print("Astronauts on ISS:");
+            display.setCursor(0, 15); // Adjust cursor position
+            display.print("Count: ");
+            display.print(astronautCount);
+            display.setCursor(0, 30); // Adjust cursor position
+
+            for (int i = 0; i < astronautCount; i++)
+            {
+                const char *name = astronauts[i]["name"];
+                display.setCursor(0, 30 + (i + 1) * 15); // Adjust cursor position
+                display.print(name);
+            }
+
+            display.display();
+        }
+
+        // Blink LED to indicate update
+        for (int i = 0; i < 2; i++)
+        {
+
+            digitalWrite(LED_PIN, HIGH);
+            delay(50);
+            digitalWrite(LED_PIN, LOW);
+            delay(50);
         }
 
         http.end();
