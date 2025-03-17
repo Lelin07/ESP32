@@ -2,6 +2,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <NewPing.h>
+#include <WiFi.h>
 
 // OLED display dimensions
 #define SCREEN_WIDTH 128
@@ -73,6 +74,9 @@ unsigned long buzzerMillis = 0;
 long buzzerInterval = 200; // Buzzer beep interval (in milliseconds)
 bool buzzerState = LOW;    // Current state of the buzzer
 
+const char *ssid = "SAMSUNG";
+const char *password = "sam1223334444";
+
 void setup()
 {
     display.begin(SSD1306_SWITCHCAPVCC, SCREEN_I2C_ADDR);
@@ -81,6 +85,23 @@ void setup()
 
     pinMode(LED_PIN, OUTPUT);    // Set the LED pin as output
     pinMode(BUZZER_PIN, OUTPUT); // Set the buzzer pin as output
+
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(1000);
+        Serial.println("Connecting to WiFi...");
+    }
+    Serial.println("Connected to WiFi");
+
+    // Beep twice for 100 ms each with a gap of 100 ms
+    for (int i = 0; i < 2; i++)
+    {
+        digitalWrite(BUZZER_PIN, HIGH);
+        delay(100);
+        digitalWrite(BUZZER_PIN, LOW);
+        delay(100);
+    }
 }
 
 void loop()
@@ -142,15 +163,15 @@ void loop()
     {
         if (distance <= DISTANCE_THRESHOLD_BEEP1)
         {
-            buzzerInterval = 50; // Fast beeps (high frequency)
+            buzzerInterval = 10; // Fast beeps (high frequency)
         }
         else if (distance <= DISTANCE_THRESHOLD_BEEP2)
         {
-            buzzerInterval = 100; // Medium beeps
+            buzzerInterval = 50; // Medium beeps
         }
         else if (distance <= DISTANCE_THRESHOLD_BEEP3)
         {
-            buzzerInterval = 200; // Slow beeps (long gap)
+            buzzerInterval = 100; // Slow beeps (long gap)
         }
 
         // Toggle buzzer state based on interval
