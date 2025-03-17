@@ -181,17 +181,6 @@ void setup()
 
 void loop()
 {
-    if (digitalRead(BUTTON_PIN) == LOW)
-    {   
-        // Make the buzzer beep for 40 ms to let the user know that the button is pressed
-        digitalWrite(BUZZER_PIN, HIGH);
-        delay(40);
-        digitalWrite(BUZZER_PIN, LOW);
-        delay(200); // debounce delay
-        currentPage = (currentPage + 1) % 3;
-        displayPage(currentPage);
-    }
-
     // Reserve a small bottom portion of the screen to show the page in circular format
     display.fillRect(0, SCREEN_HEIGHT - 10, SCREEN_WIDTH, 10, SSD1306_BLACK); // Clear the bottom portion
     for (int i = 0; i < 3; i++)
@@ -208,6 +197,17 @@ void loop()
         }
     }
     display.display();
+
+    if (digitalRead(BUTTON_PIN) == LOW)
+    {
+        // Make the buzzer beep for 40 ms to let the user know that the button is pressed
+        digitalWrite(BUZZER_PIN, HIGH);
+        delay(40);
+        digitalWrite(BUZZER_PIN, LOW);
+        delay(200); // debounce delay
+        currentPage = (currentPage + 1) % 3;
+        displayPage(currentPage);
+    }
 
     // Call playLoadingAnimation when WiFi is not connected
     if (WiFi.status() != WL_CONNECTED)
