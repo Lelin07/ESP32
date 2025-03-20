@@ -175,8 +175,7 @@ void setup()
         delay(40);
     }
 
-    // get ISS coordinates
-    getISSCoordinates();
+    displayPage(currentPage);
 }
 
 void loop()
