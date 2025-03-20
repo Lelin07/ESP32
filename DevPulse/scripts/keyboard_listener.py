@@ -3,11 +3,7 @@ import websockets
 from pynput import keyboard
 
 # WebSocket server address (replace with your ESP32's IP and port)
-<<<<<<< HEAD
 ESP32_WS_URL = "ws://0.0.0.0:81"  # Replace with your ESP32's actual IP address
-=======
-ESP32_WS_URL = "ws://192.168.4.1:81"
->>>>>>> 6fabdbc0169c0491c068af525e3e45ab3e74d7f4
 
 async def send_keystroke(key):
     try:
