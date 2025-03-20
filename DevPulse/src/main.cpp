@@ -12,6 +12,7 @@
 #define OLED_RST_PIN -1
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST_PIN);
 
+<<<<<<< HEAD
 // Define built-in LED pin
 #define LED_PIN 2
 
@@ -21,6 +22,11 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST_PIN);
 // WiFi credentials
 const char *ssid = "YourSSID";
 const char *password = "YourPassword";
+=======
+// WiFi credentials
+const char *ssid = "SAMSUNG";
+const char *password = "sam1223334444";
+>>>>>>> 6fabdbc0169c0491c068af525e3e45ab3e74d7f4
 
 // WebSocket server on port 81
 WebSocketsServer webSocket = WebSocketsServer(81);
@@ -50,6 +56,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
     String message = String((char *)payload);
     Serial.println("Received: " + message);
 
+<<<<<<< HEAD
     // Blink the built-in LED for 100 milliseconds
     digitalWrite(LED_PIN, HIGH);
     delay(50);
@@ -71,6 +78,12 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
     int16_t xPos = (SCREEN_WIDTH - width) / 2;
     int16_t yPos = (SCREEN_HEIGHT - height) / 2;
     display.setCursor(xPos, yPos);
+=======
+    // Display the message on the OLED
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("Key Pressed:");
+>>>>>>> 6fabdbc0169c0491c068af525e3e45ab3e74d7f4
     display.println(message);
     display.display();
   }
@@ -95,6 +108,7 @@ void setup()
   Serial.println("\nWiFi connected!");
   Serial.println("IP Address: " + WiFi.localIP().toString());
 
+<<<<<<< HEAD
   // Display the local IP address on the OLED at the bottom
   display.clearDisplay();
   display.setCursor(0, 0);
@@ -135,6 +149,11 @@ void setup()
   display.setCursor(xPos, yPos);
   display.println(readyMessage);
   display.display();
+=======
+  // Start WebSocket server
+  webSocket.begin();
+  webSocket.onEvent(webSocketEvent);
+>>>>>>> 6fabdbc0169c0491c068af525e3e45ab3e74d7f4
 }
 
 void loop()
