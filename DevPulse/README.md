@@ -31,7 +31,7 @@ DevPulse demonstrates how to use an ESP32 microcontroller to receive WebSocket m
 
 ## Circuit Diagram
 
-![Circuit Diagram](assets/diagram.jpg)
+![Circuit Diagram](assets/diagram.png)
 
 Connect the components as follows:
 
